@@ -16,14 +16,16 @@ def get_user_reading_goal():
     if check_result != None:
         return check_result
     token = request.headers.get("token")
-    keys = ["ID", "ReadingGoal", "Year"]
+    key = ["ReadingGoal"]
     result = run_statement("CALL get_user_reading_goal(?)", [token])
     if type(result) == list:
         if result == []:
-            return make_response(jsonify("Invalid token in request."), 500)
-        for goal in result:
-            zipped = zip(keys, goal)
-            goal = dict(zipped)
-            return make_response(jsonify(goal), 200)
+            return make_response(
+                jsonify("User has not set a reading challenge goal."), 404
+            )
+        for userReadingGoal in result:
+            zipped = zip(key, userReadingGoal)
+            userReadingGoal = dict(zipped)
+            return make_response(jsonify(userReadingGoal), 200)
     else:
-        return make_response(jsonify("Something went wrong, please try again."), 500)
+        return make_response(jsonify("Invalid token in request."), 500)

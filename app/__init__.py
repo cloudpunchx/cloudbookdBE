@@ -2,4 +2,4 @@ from flask import Flask
 
 app = Flask(__name__)
 
-from endpoints import user, user_login, yearly_reading_challenge
+from endpoints import user, user_login, user_reading_challenge
