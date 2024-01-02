@@ -87,8 +87,8 @@ def post_user_reading_goal():
 @app.patch("/api/reading-challenge")
 def patch_user_reading_goal():
     """
-    Expects 2 Args:
-    Token, Reading Goal (number)
+    Expects 3 Args:
+    Token, Reading Goal (number), Curr Year
     """
     required_header = ["token"]
     required_data = ["readingGoal", "currYear"]
@@ -126,3 +126,34 @@ def patch_user_reading_goal():
         )
     else:
         return make_response(jsonify(result), 500)
+
+
+# DELETE User Reading Challenge Goal
+@app.delete("/api/reading-challenge")
+def del_user_reading_goal():
+    """
+    Expects 2 Args:
+    Token, Curr Year
+    """
+    required_header = ["token"]
+    required_data = ["currYear"]
+    check_result = check_data(request.headers, required_header)
+    if check_result != None:
+        return check_result
+    token = request.headers.get("token")
+    check_result = check_data(request.json, required_data)
+    if check_result != None:
+        return check_result
+    currYear = request.json.get("currYear")
+    result = run_statement("CALL delete_user_reading_goal(?,?)", [token, currYear])
+    if type(result) == list:
+        if result[0][0] == 1:
+            return make_response(
+                jsonify("Deleted reading challenge goal for current year."), 201
+            )
+        elif result[0][0] == 0:
+            return make_response(jsonify("No goal has been set for this year."), 400)
+    else:
+        return make_response(
+            jsonify("Something unexpected has gone wrong, please try again."), 500
+        )
