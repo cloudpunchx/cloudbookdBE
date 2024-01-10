@@ -8,8 +8,8 @@ from helpers.helpers import check_data
 @app.get("/api/reading-challenge")
 def get_user_reading_goal():
     """
-    Expects 1 Arg:
-    token
+    Expects the following required parameters in the request headers:
+    - Token
     """
     required_data = ["token"]
     check_result = check_data(request.headers, required_data)
