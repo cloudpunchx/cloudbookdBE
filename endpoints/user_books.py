@@ -4,7 +4,7 @@ from helpers.dbhelpers import run_statement
 from helpers.helpers import check_data
 
 
-# GET user books - from tbr, currently reading, read, and specific books with book Id
+# GET user books - to be read, currently reading, read
 @app.get("/api/user-books")
 def get_user_books():
     """
@@ -14,6 +14,7 @@ def get_user_books():
     Optional Search Params:
     - bookId (string)
     - readingStatus (string)
+    - dateFinished
     """
     required_header = ["token"]
     check_result = check_data(request.headers, required_header)
@@ -26,6 +27,9 @@ def get_user_books():
     readingStatus = request.args.get("readingStatus")
     if readingStatus is None:
         readingStatus = None
+    dateFinished = request.args.get("dateFinished")
+    if dateFinished is None:
+        dateFinished = None
     key = [
         "bookId",
         "Title",
@@ -37,15 +41,14 @@ def get_user_books():
         "Rating",
         "Times_Read",
     ]
-    result = run_statement("CALL get_user_books(?,?,?)", [token, bookId, readingStatus])
-
-    # Check if the result is a list (multiple user books)
-    if isinstance(result, list):
-        if not result:
+    result = run_statement(
+        "CALL get_user_books(?,?,?,?)", [token, bookId, readingStatus, dateFinished]
+    )
+    if type(result) == list:
+        if result == []:
             return make_response(
-                jsonify("User does not have books with this reading status."), 404
+                jsonify("User does not have this book in their shelf."), 404
             )
-
         user_books_list = []
         for userBooks in result:
             zipped = zip(key, userBooks)
@@ -53,12 +56,6 @@ def get_user_books():
             user_books_list.append(userBooks_dict)
 
         return make_response(jsonify(user_books_list), 200)
-    elif result == 0:
-        return make_response(
-            jsonify("User does not have this book in their shelf."), 404
-        )
-    elif result == 1:
-        return make_response(jsonify("Book not found."), 404)
     else:
         return make_response(jsonify("Invalid token in request."), 500)
 
