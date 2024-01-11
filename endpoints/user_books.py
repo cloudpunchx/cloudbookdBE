@@ -78,7 +78,6 @@ def post_user_books():
     - dateStarted (string, format: YYYY-MM-DD)
     - dateFinished (string, format: YYYY-MM-DD)
     - rating (decimal, range: 0.5-5)
-    - timesRead (integer)
     """
     required_header = ["token"]
     required_data = ["bookId", "bookTitle", "author", "bookCover"]
@@ -97,9 +96,8 @@ def post_user_books():
     dateStarted = request.json.get("dateStarted")
     dateFinished = request.json.get("dateFinished")
     rating = request.json.get("rating")
-    timesRead = request.json.get("timesRead")
     result = run_statement(
-        "CALL post_to_user_books(?,?,?,?,?,?,?,?,?,?)",
+        "CALL post_to_user_books(?,?,?,?,?,?,?,?,?)",
         [
             token,
             bookId,
@@ -110,7 +108,6 @@ def post_user_books():
             dateStarted,
             dateFinished,
             rating,
-            timesRead,
         ],
     )
     if type(result) == list:
@@ -133,5 +130,51 @@ def post_user_books():
             jsonify("Error: This reading status is not a valid."),
             400,
         )
+    else:
+        return make_response(jsonify(result), 500)
+
+
+# PATCH Edit Book in User Shelf - eg. date started, date finished, rating, reading status, times read
+@app.patch("/api/user-books")
+def patch_user_books_info():
+    """
+    Expects the following required parameters in the request headers:
+    - Token
+
+    Expects the following data in the request body:
+    - bookId (string)
+
+    Optional data:
+    - readingStatus (string)
+    - dateStarted (string, format: YYYY-MM-DD)
+    - dateFinished (string, format: YYYY-MM-DD)
+    - rating (decimal, range: 0.5-5)
+    """
+    required_header = ["token"]
+    required_data = ["bookId"]
+    check_result = check_data(request.headers, required_header)
+    if check_result != None:
+        return check_result
+    token = request.headers.get("token")
+    check_result = check_data(request.json, required_data)
+    if check_result != None:
+        return check_result
+    bookId = request.json.get("bookId")
+    readingStatus = request.json.get("readingStatus")
+    dateStarted = request.json.get("dateStarted")
+    dateFinished = request.json.get("dateFinished")
+    rating = request.json.get("rating")
+    result = run_statement(
+        "CALL patch_user_books_info(?,?,?,?,?,?)",
+        [token, bookId, readingStatus, dateStarted, dateFinished, rating],
+    )
+    if type(result) == list:
+        if result[0][0] == 1:
+            return make_response(
+                jsonify("Successfully edited user book information"), 200
+            )
+        elif result[0][0] == 0:
+            # Something went wrong on the server
+            return make_response(jsonify("Error: Book was not updated."), 500)
     else:
         return make_response(jsonify(result), 500)
