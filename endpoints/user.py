@@ -10,8 +10,8 @@ from helpers.helpers import check_data
 @app.get("/api/user")
 def get_user_profile():
     """
-    Expects 1 Arg:
-    token
+    Expects required parameter in the request headers:
+    - Token
     """
     required_data = ["token"]
     check_result = check_data(request.headers, required_data)
@@ -45,8 +45,12 @@ def get_user_profile():
 @app.post("/api/user")
 def post_user_signup():
     """
-    Expects 5 Args:
-    username, firstName, lastName, email, password
+    Expects the following data in the request body:
+    - username (string)
+    - firstName (string)
+    - lastName (string)
+    - email (string)
+    - password (string)
     """
     required_data = ["username", "firstName", "lastName", "email", "password"]
     check_result = check_data(request.json, required_data)
@@ -95,3 +99,84 @@ def post_user_signup():
             return make_response(
                 jsonify("Something went wrong, please try again."), 500
             )
+
+
+# PATCH User Profile (edit)
+@app.patch("/api/user")
+def edit_user_profile():
+    """
+    Expects required parameter in the request headers:
+    - Token
+
+    Expects the following data in the request body:
+    - username (string)
+    - firstName (string)
+    - lastName (string)
+    - email (string)
+    - password (string)
+    - bio (string)
+    - profile_img (string)
+    """
+    required_header = ["token"]
+    check_result = check_data(request.headers, required_header)
+    if check_result != None:
+        return check_result
+    token = request.headers.get("token")
+    username = request.json.get("username")
+    if username == "":
+        username = None
+    first_name = request.json.get("firstName")
+    if first_name == "":
+        first_name = None
+    last_name = request.json.get("lastName")
+    if last_name == "":
+        last_name = None
+    email = request.json.get("email")
+    if email == "":
+        email = None
+    password = request.json.get("password")
+    salt = bcrypt.gensalt()
+    hash_result = bcrypt.hashpw(password.encode(), salt)
+    if hash_result == None:
+        hash_result = None
+    bio = request.json.get("bio")
+    if bio == "":
+        bio = None
+    profile_img = request.json.get("profileImg")
+    if profile_img == "":
+        profile_img = None
+    result = run_statement(
+        "CALL patch_user_profile(?,?,?,?,?,?,?,?)",
+        [token, username, first_name, last_name, email, hash_result, bio, profile_img],
+    )
+    if "user_UN_username" in result:
+        return make_response(
+            jsonify("This username is already in use, please enter another username."),
+            409,
+        )
+    elif "user_UN_email" in result:
+        return make_response(
+            jsonify(
+                "This email is already in use, please enter another email or click forgot password."
+            ),
+            409,
+        )
+    elif "user_CHECK_email_format" in result:
+        return make_response(
+            jsonify("Check email format and try again. Hint: hello@cloudpunchd.com")
+        )
+    elif "char_length(`username`) <= 20" in result:
+        return make_response(jsonify("Username can only be 20 characters max."), 409)
+    elif "Data too long for column 'username_input' at row 0" in result:
+        return make_response(jsonify("Username can only be 20 characters max."), 409)
+    elif type(result) == list:
+        if result[0][0] == 1:
+            return make_response(jsonify("Profile has been updated successfully."), 200)
+        elif result[0][0] == 0:
+            return make_response(
+                jsonify("Something went wrong, please try again."), 500
+            )
+    else:
+        return make_response(
+            jsonify("There has been an unexpected error, please try again."), 500
+        )

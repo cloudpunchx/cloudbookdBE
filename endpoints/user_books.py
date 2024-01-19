@@ -8,7 +8,7 @@ from helpers.helpers import check_data
 @app.get("/api/user-books")
 def get_user_books():
     """
-    Expects the following required parameters in the request headers:
+    Expects required parameter in the request headers:
     - Token
 
     Optional Search Params:
@@ -64,7 +64,7 @@ def get_user_books():
 @app.post("/api/user-books")
 def post_user_books():
     """
-    Expects the following required parameters in the request headers:
+    Expects required parameter in the request headers:
     - Token
 
     Expects the following data in the request body:
@@ -170,11 +170,8 @@ def patch_user_books_info():
     )
     if type(result) == list:
         if result[0][0] == 1:
-            return make_response(
-                jsonify("Successfully edited user book information"), 200
-            )
+            return make_response(jsonify("Success"), 200)
         elif result[0][0] == 0:
-            # Something went wrong on the server
             return make_response(jsonify("Error: Book was not updated."), 500)
     else:
         return make_response(jsonify(result), 500)
