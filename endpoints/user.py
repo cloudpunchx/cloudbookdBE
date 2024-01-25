@@ -135,10 +135,10 @@ def edit_user_profile():
     if email == "":
         email = None
     password = request.json.get("password")
-    salt = bcrypt.gensalt()
-    hash_result = bcrypt.hashpw(password.encode(), salt)
-    if hash_result == None:
-        hash_result = None
+    hash_result = None
+    if password:  # Only hash the password if it's provided and not empty
+        salt = bcrypt.gensalt()
+        hash_result = bcrypt.hashpw(password.encode(), salt)
     bio = request.json.get("bio")
     if bio == "":
         bio = None
