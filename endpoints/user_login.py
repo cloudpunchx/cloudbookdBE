@@ -9,8 +9,9 @@ from helpers.helpers import check_data
 @app.post("/api/user-login")
 def post_user_login():
     """
-    Expects 2 Args
-    Email, Password
+    Expects the following data in the request body:
+    - Email (string)
+    - Password (string)
     """
     required_data = ["email", "password"]
     check_result = check_data(request.json, required_data)
